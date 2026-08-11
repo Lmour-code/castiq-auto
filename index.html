@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>CastIQ Auto</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0f10">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#0a0f10; --bg2:#0d1416; --panel:#111a1c; --panel2:#0f1719;
+    --border:#1f3033; --border-soft:#182427;
+    --teal:#2dd4bf; --teal-dim:#1b8f80; --teal-glow:rgba(45,212,191,0.15);
+    --amber:#f0a83c; --red:#ef5658; --green:#3ecf8e;
+    --text:#dfe9ea; --text-dim:#8ba0a2; --text-faint:#5a7072;
+    --mono:'JetBrains Mono','Consolas','SFMono-Regular',monospace;
+    --sans:'Inter','Segoe UI',-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:radial-gradient(circle at 15% 0%, rgba(45,212,191,0.05), transparent 40%), var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding-bottom:24px;}
+  header{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(10,15,16,0.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--border-soft);}
+  .brand{display:flex;align-items:center;gap:9px;}
+  .brand .mark{width:28px;height:28px;border:1px solid var(--teal);border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--teal);font-family:var(--mono);font-size:11px;font-weight:700;box-shadow:0 0 12px var(--teal-glow) inset;}
+  .brand .name{font-family:var(--mono);font-size:13.5px;letter-spacing:1.5px;font-weight:600;}
+  .brand .sub{font-size:9px;color:var(--text-faint);letter-spacing:1px;text-transform:uppercase;}
+  .navbtns{display:flex;gap:6px;}
+  header button{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:10.5px;padding:7px 10px;border-radius:6px;}
+
+  main{max-width:520px;margin:0 auto;padding:16px;}
+  .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:2px;color:var(--teal);text-transform:uppercase;margin-bottom:4px;}
+  h1{font-size:20px;font-weight:600;}
+  .muted{color:var(--text-dim);font-size:13px;}
+
+  .btn{font-family:var(--mono);font-size:12px;letter-spacing:.5px;text-transform:uppercase;padding:13px 16px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);cursor:pointer;width:100%;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn.primary{background:linear-gradient(180deg,rgba(45,212,191,0.18),rgba(45,212,191,0.06));border-color:var(--teal-dim);color:var(--teal);font-weight:600;}
+  .btn.amber{background:linear-gradient(180deg,rgba(240,168,60,0.18),rgba(240,168,60,0.06));border-color:var(--amber);color:var(--amber);}
+  .btn.ghost{background:transparent;border-color:transparent;color:var(--text-dim);}
+  .btn:disabled{opacity:.35;}
+  .btn.sm{padding:8px 12px;min-height:auto;width:auto;font-size:10.5px;}
+
+  .panel{background:linear-gradient(180deg,rgba(255,255,255,0.015),transparent),var(--panel);border:1px solid var(--border-soft);border-radius:10px;padding:16px;margin-bottom:14px;}
+
+  .device-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .device-card{border:1.5px solid var(--border);border-radius:10px;padding:22px 10px;text-align:center;cursor:pointer;background:var(--panel2);}
+  .device-card.selected{border-color:var(--teal);background:rgba(45,212,191,.08);box-shadow:0 0 14px var(--teal-glow) inset;}
+  .device-card .dc-ic{font-size:24px;margin-bottom:8px;}
+  .device-card .dc-name{font-family:var(--mono);font-size:13px;text-transform:uppercase;letter-spacing:.6px;}
+
+  .plane-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .plane-tile{border:1.5px dashed var(--border);border-radius:10px;padding:18px 10px;text-align:center;cursor:pointer;background:var(--panel2);position:relative;overflow:hidden;min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .plane-tile.done{border-style:solid;border-color:var(--teal-dim);}
+  .plane-tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.35;}
+  .plane-tile .pt-ic{font-size:22px;margin-bottom:6px;position:relative;z-index:1;}
+  .plane-tile .pt-name{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.6px;position:relative;z-index:1;}
+  .plane-tile .pt-status{font-size:10.5px;color:var(--text-faint);margin-top:5px;position:relative;z-index:1;}
+  .plane-tile.done .pt-status{color:var(--teal);}
+
+  .step-hdr{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:8px;}
+  .check-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-soft);font-size:12.5px;}
+  .check-row:last-child{border-bottom:none;}
+  .check-row .cname{color:var(--text-dim);}
+  .check-badge{font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;padding:2px 8px;border-radius:20px;border:1px solid;}
+  .check-badge.pass{color:var(--green);border-color:rgba(62,207,142,.4);}
+  .check-badge.warn{color:var(--amber);border-color:rgba(240,168,60,.4);}
+  .check-badge.fail{color:var(--red);border-color:rgba(239,86,88,.4);}
+
+  .tool-step{border:1px solid var(--border-soft);border-radius:8px;padding:12px;margin-bottom:8px;background:var(--panel2);}
+  .tool-step.active{border-color:var(--teal-dim);background:rgba(45,212,191,.06);}
+  .tool-step.complete{border-color:rgba(62,207,142,.3);}
+  .tool-step .t-lbl{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim);display:flex;justify-content:space-between;}
+  .tool-step.complete .t-lbl{color:var(--green);}
+  .tool-step .t-status{font-size:11.5px;color:var(--text-faint);margin-top:5px;line-height:1.4;}
+
+  canvas{display:block;max-width:100%;border-radius:8px;touch-action:none;}
+  .canvas-wrap{border:1px solid var(--border-soft);border-radius:8px;overflow:hidden;background:#000;margin-bottom:14px;position:relative;}
+
+  label{display:block;font-size:10.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;}
+  input[type=number],input[type=text],input[type=password],select{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:11px 12px;border-radius:6px;font-size:15px;outline:none;}
+  input:focus,select:focus{border-color:var(--teal-dim);box-shadow:0 0 0 3px var(--teal-glow);}
+  .row{display:flex;gap:10px;}
+  .row>*{flex:1;}
+  .field{margin-bottom:10px;}
+
+  .badge{font-family:var(--mono);font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid;display:inline-flex;align-items:center;gap:5px;}
+  .badge .dot{width:6px;height:6px;border-radius:50%;}
+  .badge.pass{color:var(--green);border-color:rgba(62,207,142,.4);background:rgba(62,207,142,.1);}
+  .badge.pass .dot{background:var(--green);}
+  .badge.amber{color:var(--amber);border-color:rgba(240,168,60,.4);background:rgba(240,168,60,.1);}
+  .badge.amber .dot{background:var(--amber);}
+  .badge.review{color:var(--red);border-color:rgba(239,86,88,.4);background:rgba(239,86,88,.1);}
+  .badge.review .dot{background:var(--red);}
+  .badge.ai{color:#c9a6f0;border-color:rgba(201,166,240,.4);background:rgba(201,166,240,.1);}
+  .badge.ai .dot{background:#c9a6f0;}
+  .badge.manual{color:var(--text-dim);border-color:var(--border);}
+
+  .report-hero{text-align:center;padding:26px 16px;}
+  .report-hero .verdict{font-size:22px;font-weight:700;margin-bottom:4px;}
+  .report-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border-soft);gap:10px;}
+  .report-row:last-child{border-bottom:none;}
+  .report-row .rname{font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.5px;}
+  .report-row .rval{font-family:var(--mono);font-size:16px;font-weight:600;margin-top:2px;}
+
+  .why{border-left:2px solid var(--teal-dim);padding:9px 12px;margin-top:8px;background:rgba(45,212,191,.05);font-size:11.5px;color:var(--text-dim);line-height:1.5;border-radius:0 6px 6px 0;}
+  details summary{cursor:pointer;font-family:var(--mono);font-size:10.5px;color:var(--teal);text-transform:uppercase;letter-spacing:.5px;list-style:none;}
+  details summary::-webkit-details-marker{display:none;}
+  details summary::before{content:'▸ ';}
+  details[open] summary::before{content:'▾ ';}
+
+  .hist-item{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-soft);cursor:pointer;}
+  .hist-item:last-child{border-bottom:none;}
+  .hist-item .hinfo{flex:1;}
+  .hist-item .hmeta{font-size:11px;color:var(--text-faint);margin-top:2px;}
+  .empty{padding:36px 16px;text-align:center;color:var(--text-faint);}
+  .empty .icon{font-size:24px;margin-bottom:8px;opacity:.5;}
+
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--teal-dim);color:var(--teal);padding:11px 18px;border-radius:6px;font-family:var(--mono);font-size:12px;z-index:200;max-width:88vw;text-align:center;}
+  .footer-note{margin-top:30px;padding-top:14px;border-top:1px solid var(--border-soft);font-size:10.5px;color:var(--text-faint);font-family:var(--mono);text-align:center;line-height:1.6;}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="mark">CA</div><div><div class="name">CASTIQ AUTO</div><div class="sub">Suggest · Confirm · Measure</div></div></div>
+  <div class="navbtns"><button id="navSettings">Settings</button><button id="navHistory">History</button></div>
+</header>
+<main id="app"></main>
+<div id="toastRoot"></div>
+
+<script>
+/* =========================================================
+   CASTIQ AUTO
+   AI/vision suggests where features are.
+   Technician confirms or corrects.
+   The deterministic geometry engine measures.
+   The tolerance rules decide PASS/REVIEW.
+   The AI never decides PASS/REVIEW.
+   ========================================================= */
+
+const STORE = {
+  get(key, fallback){ try{ const v=localStorage.getItem(key); return v?JSON.parse(v):fallback; }catch(e){ return fallback; } },
+  set(key, value){ try{ localStorage.setItem(key, JSON.stringify(value)); return true; }catch(e){ console.error(e); return false; } }
+};
+function toast(msg){ const el=document.createElement('div'); el.className='toast'; el.textContent=msg; document.getElementById('toastRoot').appendChild(el); setTimeout(()=>el.remove(),3200); }
+function uid(){ return 'ck-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7); }
+function fmtDate(iso){ const d=new Date(iso); return d.toLocaleDateString(undefined,{day:'2-digit',month:'short'}) + ' · ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); }
+function round1(n){ return Math.round(n*10)/10; }
+function clamp(n,a,b){ return Math.max(a,Math.min(b,n)); }
+function dist(p1,p2){ return Math.hypot(p2.x-p1.x,p2.y-p1.y); }
+function pointToSegDist(pt,a,b){ const ab={x:b.x-a.x,y:b.y-a.y}; const len2=ab.x*ab.x+ab.y*ab.y||1; const t=clamp(((pt.x-a.x)*ab.x+(pt.y-a.y)*ab.y)/len2,0,1); const cx=a.x+ab.x*t, cy=a.y+ab.y*t; return Math.hypot(pt.x-cx,pt.y-cy); }
+function angleBetween(a1,a2,b1,b2){
+  const va={x:a2.x-a1.x,y:a2.y-a1.y}, vb={x:b2.x-b1.x,y:b2.y-b1.y};
+  const dot=va.x*vb.x+va.y*vb.y, magA=Math.hypot(va.x,va.y), magB=Math.hypot(vb.x,vb.y);
+  if (magA===0||magB===0) return {angle:0,sign:1};
+  let cos=clamp(dot/(magA*magB),-1,1), deg=Math.acos(cos)*180/Math.PI;
+  const cross=va.x*vb.y-va.y*vb.x;
+  return {angle: Math.round(deg*2)/2, sign: cross>=0?1:-1};
+}
+function angleStatus(deviation, tol){
+  const a=Math.abs(deviation);
+  if (a<=tol*0.7) return {status:'PASS', cls:'pass'};
+  if (a<=tol) return {status:'PASS', cls:'amber'};
+  return {status:'REVIEW REQUIRED', cls:'review'};
+}
+function trimStatus(mm,min,max){
+  if (mm<min) return {status:'REVIEW REQUIRED', cls:'review', note:'Below target — possible excessive material removal.'};
+  if (mm>max) return {status:'REVIEW REQUIRED', cls:'review', note:'Above target — possible insufficient clearance.'};
+  const mid=(min+max)/2, half=(max-min)/2;
+  if (Math.abs(mm-mid)>half*0.6) return {status:'PASS', cls:'amber', note:'Within range, near boundary.'};
+  return {status:'PASS', cls:'pass', note:'Within target range.'};
+}
+function badgeHtml(cls,label){ return `<span class="badge ${cls}"><span class="dot"></span>${label}</span>`; }
+
+const DEVICES = [
+  {key:'AFO', name:'AFO', icon:'🦵', defaults:{tol:1.5, tlMin:10, tlMax:15}},
+  {key:'PROSTHETIC', name:'Prosthetic', icon:'🦿', defaults:{tol:1.5, tlMin:15, tlMax:25}},
+];
+const PLANES = [
+  {key:'lateral', name:'Lateral', icon:'◐', type:'angle', axisA:'Tibial / proximal-limb axis', axisB:'Foot / distal reference axis'},
+  {key:'posterior', name:'Posterior', icon:'▲', type:'angle', axisA:'Tibial / proximal-limb axis', axisB:'Hindfoot / distal reference axis'},
+  {key:'medial', name:'Medial', icon:'◑', type:'trimline'},
+  {key:'anterior', name:'Anterior', icon:'▼', type:'trimline'},
+];
+
+let state = { view:'home', settings:null, history:[], check:null, activePlane:null };
+
+function defaultSettings(){
+  const s = {apiKey:'', aiEnabled:true, devices:{}, fixedCal:{enabled:false, pxPerMm:null, calibratedAtWidth:null, referenceMm:null, calibratedAt:null}};
+  DEVICES.forEach(d=>{ s.devices[d.key] = {...d.defaults}; });
+  return s;
+}
+function boot(){
+  state.settings = STORE.get('auto-settings', null) || defaultSettings();
+  // migrate: ensure both device keys always present even if settings were saved before a device existed
+  DEVICES.forEach(d=>{ if(!state.settings.devices[d.key]) state.settings.devices[d.key] = {...d.defaults}; });
+  if (!state.settings.fixedCal) state.settings.fixedCal = {enabled:false, pxPerMm:null, calibratedAtWidth:null, referenceMm:null, calibratedAt:null};
+  state.history = STORE.get('auto-index', []);
+  render();
+}
+
+function render(){
+  document.getElementById('navHistory').onclick = ()=>{ state.view='history'; render(); };
+  document.getElementById('navSettings').onclick = ()=>{ state.view='settings'; render(); };
+  const app = document.getElementById('app');
+  if (state.view==='home') app.innerHTML = viewHome();
+  else if (state.view==='settings') app.innerHTML = viewSettings();
+  else if (state.view==='fixedcal') app.innerHTML = viewFixedCal();
+  else if (state.view==='check') app.innerHTML = viewCheck();
+  else if (state.view==='plane') app.innerHTML = viewPlaneCapture();
+  else if (state.view==='report') app.innerHTML = viewReport();
+  else if (state.view==='history') app.innerHTML = viewHistory();
+  else if (state.view==='detail') app.innerHTML = viewDetail();
+  wire();
+}
+
+/* ---------------- HOME ---------------- */
+function viewHome(){
+  const recent = [...state.history].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,4);
+  const keyStatus = state.settings.apiKey ? `AI suggestions ${state.settings.aiEnabled?'on':'off'} · key set` : 'AI suggestions off — no API key set';
+  return `
+  <div class="eyebrow">Fabrication Verification</div>
+  <h1 style="margin-bottom:10px;">CastIQ Auto</h1>
+  <div class="panel">
+    <div class="muted">Photo → quality check → calibrate → AI suggests points, you confirm or correct → the same deterministic engine measures → PASS/REVIEW against workshop tolerances.</div>
+    <div class="muted" style="margin-top:8px;font-size:11px;">${keyStatus} · <a href="#" id="goSettingsLink" style="color:var(--teal);">Settings</a></div>
+  </div>
+  <button class="btn primary" id="btnStart" style="margin-bottom:18px;">📷 New Cast Check</button>
+
+  ${recent.length ? `<div class="panel"><div class="step-hdr"><span>Recent</span><span></span></div>
+    ${recent.map(r=>`<div class="hist-item" data-open="${r.id}"><div class="hinfo"><div style="font-family:var(--mono);font-weight:600;">${r.device} · ${r.caseRef||'Cast Check'}</div><div class="hmeta">${fmtDate(r.createdAt)}</div></div>${badgeHtml(r.overallCls,r.overallStatus)}</div>`).join('')}
+  </div>` : ''}
+
+  <div class="footer-note">MEASURE FIRST · INTERPRET SECOND · REPORT THIRD<br>AI suggests where features are. The technician confirms them. The geometry engine measures. The rules engine decides PASS/REVIEW. The AI never decides PASS/REVIEW.</div>
+  `;
+}
+
+/* ---------------- SETTINGS ---------------- */
+function viewSettings(){
+  const s = state.settings;
+  return `
+  <div class="eyebrow">Configuration</div>
+  <h1 style="margin-bottom:14px;">Settings</h1>
+
+  <div class="panel">
+    <h2 style="font-size:15px;margin-bottom:8px;">AI Landmark Suggestions</h2>
+    <p class="muted" style="margin-bottom:10px;font-size:12px;">Optional. Uses your own Anthropic API key, sent directly from this browser to Anthropic — never stored anywhere except this device. If left blank, every plane falls back to fully manual point placement (the original, proven workflow).</p>
+    <div class="field"><label>Anthropic API key</label><input type="password" id="setApiKey" value="${s.apiKey||''}" placeholder="sk-ant-..."></div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+      <input type="checkbox" id="setAiEnabled" ${s.aiEnabled?'checked':''} style="width:auto;">
+      <span style="text-transform:none;font-size:13px;color:var(--text);">Enable AI suggestions when a key is set</span>
+    </label>
+  </div>
+
+  <div class="panel">
+    <h2 style="font-size:15px;margin-bottom:8px;">Fixed Setup Calibration</h2>
+    <p class="muted" style="margin-bottom:10px;font-size:12px;">If the phone/camera is always the same distance from the cast (mounted, or a jig), calibrate once here and every future photo uses that scale automatically — no per-photo tapping. If distance varies shot to shot, leave this off and calibrate each photo as before.</p>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;">
+      <input type="checkbox" id="setFixedCalEnabled" ${s.fixedCal.enabled?'checked':''} style="width:auto;">
+      <span style="text-transform:none;font-size:13px;color:var(--text);">Use fixed calibration (skip per-photo calibration)</span>
+    </label>
+    ${s.fixedCal.pxPerMm ? `
+      <div class="muted" style="font-size:12px;margin-bottom:8px;">Calibrated: ${s.fixedCal.pxPerMm.toFixed(4)} px/mm at ${s.fixedCal.calibratedAtWidth}px width, from a ${s.fixedCal.referenceMm}mm reference, set ${fmtDate(s.fixedCal.calibratedAt)}.</div>
+    ` : `<div class="muted" style="font-size:12px;margin-bottom:8px;color:var(--amber);">Not calibrated yet.</div>`}
+    <button class="btn ${s.fixedCal.pxPerMm?'ghost':'primary'} sm" id="btnCalibrateFixed">${s.fixedCal.pxPerMm?'Recalibrate':'Calibrate Now'}</button>
+  </div>
+
+  ${DEVICES.map(d=>{
+    const dv = s.devices[d.key];
+    return `<div class="panel">
+      <h2 style="font-size:15px;margin-bottom:8px;">${d.icon} ${d.name} Tolerances</h2>
+      <p class="muted" style="margin-bottom:10px;font-size:11.5px;">Workshop-configurable placeholders — not clinically validated values. Set these to your own approved standards.</p>
+      <div class="row">
+        <div class="field"><label>Angle tol ±°</label><input type="number" step="0.1" data-dev="${d.key}" data-f="tol" value="${dv.tol}"></div>
+        <div class="field"><label>Trimline min mm</label><input type="number" step="0.5" data-dev="${d.key}" data-f="tlMin" value="${dv.tlMin}"></div>
+        <div class="field"><label>Trimline max mm</label><input type="number" step="0.5" data-dev="${d.key}" data-f="tlMax" value="${dv.tlMax}"></div>
+      </div>
+    </div>`;
+  }).join('')}
+
+  <button class="btn ghost" id="btnHome">← Back</button>
+  `;
+}
+
+/* ---------------- FIXED SETUP CALIBRATION ---------------- */
+function viewFixedCal(){
+  const f = state.fixedCalState || (state.fixedCalState = {imgEl:null, calPoints:[]});
+  return `
+  <div class="eyebrow">Settings</div>
+  <h1 style="margin-bottom:14px;">Calibrate Fixed Setup</h1>
+  ${!f.imgEl ? `
+    <div class="panel" id="cameraPanel">
+      <div class="muted" style="margin-bottom:10px;">Take a photo of your normal setup with a known reference distance visible (a ruler, marker, or fixed jig mark) — exactly as it'll be for every real capture.</div>
+      <div class="canvas-wrap" id="liveWrap" style="display:none;">
+        <video id="liveVideo" autoplay playsinline muted style="width:100%;display:block;background:#000;"></video>
+      </div>
+      <div id="cameraError" class="muted" style="display:none;margin-bottom:10px;color:var(--amber);"></div>
+      <button class="btn primary" id="btnOpenCamera" style="margin-bottom:8px;">📷 Open Camera</button>
+      <button class="btn" id="btnShoot" style="display:none;margin-bottom:8px;">Capture</button>
+      <button class="btn ghost" id="btnUseGallery">Choose from Gallery instead</button>
+      <input type="file" id="fcFile" accept="image/*" style="display:none;">
+    </div>
+  ` : `
+    <div class="canvas-wrap" id="canvasWrap"></div>
+    <div id="tools"></div>
+  `}
+  <button class="btn ghost" id="btnCancelFixedCal" style="margin-top:6px;">Cancel</button>
+  `;
+}
+
+function wireFixedCal(){
+  const f = state.fixedCalState;
+  document.getElementById('btnCancelFixedCal')?.addEventListener('click', ()=>{ stopLiveStream(); state.fixedCalState=null; state.view='settings'; render(); });
+
+  document.getElementById('btnOpenCamera')?.addEventListener('click', async ()=>{
+    const errEl = document.getElementById('cameraError'); errEl.style.display='none';
+    try{
+      liveStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:1280} }, audio:false });
+      const video = document.getElementById('liveVideo');
+      video.srcObject = liveStream;
+      document.getElementById('liveWrap').style.display='block';
+      document.getElementById('btnOpenCamera').style.display='none';
+      document.getElementById('btnShoot').style.display='flex';
+    }catch(err){
+      errEl.textContent = 'Camera unavailable. Use "Choose from Gallery" instead.'; errEl.style.display='block';
+    }
+  });
+  document.getElementById('btnShoot')?.addEventListener('click', ()=>{
+    const video = document.getElementById('liveVideo');
+    const tmp = document.createElement('canvas'); tmp.width=video.videoWidth; tmp.height=video.videoHeight;
+    tmp.getContext('2d').drawImage(video,0,0,tmp.width,tmp.height);
+    stopLiveStream();
+    const img = new Image(); img.onload=()=>{ f.imgEl=img; setupFcCanvas(); }; img.src = tmp.toDataURL('image/jpeg',0.9);
+  });
+  document.getElementById('btnUseGallery')?.addEventListener('click', ()=>{ stopLiveStream(); document.getElementById('fcFile').click(); });
+  document.getElementById('fcFile')?.addEventListener('change', (e)=>{
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=(ev)=>{ const img=new Image(); img.onload=()=>{ f.imgEl=img; setupFcCanvas(); }; img.src=ev.target.result; };
+    reader.readAsDataURL(file);
+  });
+
+  function setupFcCanvas(){
+    const maxW = Math.min(480, window.innerWidth-32);
+    const scale = Math.min(1, maxW/f.imgEl.width);
+    const w=Math.round(f.imgEl.width*scale), h=Math.round(f.imgEl.height*scale);
+    document.getElementById('app').innerHTML = viewFixedCal();
+    document.getElementById('canvasWrap').innerHTML = `<canvas id="fcCanvas" width="${w}" height="${h}"></canvas>`;
+    const canvas=document.getElementById('fcCanvas'), ctx=canvas.getContext('2d');
+    ctx.drawImage(f.imgEl,0,0,w,h);
+    f.canvas=canvas; f.ctx=ctx; f.baseW=w; f.baseH=h; f.calPoints=[];
+    renderFcTools();
+    canvas.addEventListener('click',(e)=>{
+      const rect=canvas.getBoundingClientRect();
+      const x=(e.clientX-rect.left)*(canvas.width/rect.width), y=(e.clientY-rect.top)*(canvas.height/rect.height);
+      if (f.calPoints.length<2){ f.calPoints.push({x,y}); redrawFc(); renderFcTools(); }
+    });
+    document.getElementById('btnCancelFixedCal')?.addEventListener('click', ()=>{ stopLiveStream(); state.fixedCalState=null; state.view='settings'; render(); });
+  }
+  function redrawFc(){
+    const {ctx,canvas,imgEl,baseW,baseH}=f;
+    ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(imgEl,0,0,baseW,baseH);
+    ctx.fillStyle='#f0a83c';
+    f.calPoints.forEach((p,i)=>{ ctx.beginPath(); ctx.arc(p.x,p.y,7,0,7); ctx.fill(); ctx.font='11px monospace'; ctx.fillText('C'+(i+1),p.x+9,p.y-9); });
+    if (f.calPoints.length===2){ ctx.strokeStyle='#f0a83c'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(f.calPoints[0].x,f.calPoints[0].y); ctx.lineTo(f.calPoints[1].x,f.calPoints[1].y); ctx.stroke(); }
+  }
+  function renderFcTools(){
+    const tools = document.getElementById('tools'); if (!tools) return;
+    tools.innerHTML = `<div class="tool-step active">
+      <div class="t-lbl"><span>Tap 2 points, known distance</span></div>
+      <div class="t-status">${f.calPoints.length}/2 placed</div>
+      ${f.calPoints.length===2 ? `<div class="row" style="margin-top:8px;"><input type="number" id="fcMm" placeholder="mm"><button class="btn primary sm" id="btnSaveFixedCal">Save</button></div>`:''}
+      ${f.calPoints.length ? `<button class="btn ghost sm" id="btnResetFc" style="margin-top:6px;">Reset</button>`:''}
+    </div>`;
+    document.getElementById('btnResetFc')?.addEventListener('click', ()=>{ f.calPoints=[]; redrawFc(); renderFcTools(); });
+    document.getElementById('btnSaveFixedCal')?.addEventListener('click', ()=>{
+      const mm = parseFloat(document.getElementById('fcMm').value);
+      if (!mm||mm<=0){ toast('Enter a valid mm distance.'); return; }
+      const px = dist(f.calPoints[0], f.calPoints[1]);
+      state.settings.fixedCal = { enabled:true, pxPerMm: px/mm, calibratedAtWidth: f.baseW, referenceMm: mm, calibratedAt: new Date().toISOString() };
+      STORE.set('auto-settings', state.settings);
+      state.fixedCalState=null; state.view='settings'; render();
+      toast('Fixed setup calibration saved.');
+    });
+  }
+}
+
+
+function startCheck(){
+  state.check = { id:uid(), createdAt:new Date().toISOString(), device:null, caseRef:'', results:{} };
+  state.view='check'; render();
+}
+function viewCheck(){
+  const c = state.check;
+  if (!c.device){
+    return `<div class="eyebrow">New Check</div><h1 style="margin-bottom:14px;">Select Device</h1>
+    <div class="device-grid">
+      ${DEVICES.map(d=>`<div class="device-card" data-device="${d.key}"><div class="dc-ic">${d.icon}</div><div class="dc-name">${d.name}</div></div>`).join('')}
+    </div>
+    <button class="btn ghost" id="btnCancelCheck">Cancel</button>`;
+  }
+  const doneCount = Object.keys(c.results).length;
+  return `
+  <div class="eyebrow">${c.device} · New Check</div>
+  <h1 style="margin-bottom:6px;">Capture 4 Planes</h1>
+  <input type="text" id="caseRef" placeholder="Case / Device ID (optional)" value="${c.caseRef}" style="margin-bottom:14px;">
+  <div class="plane-grid">
+    ${PLANES.map(p=>{
+      const r = c.results[p.key];
+      return `<div class="plane-tile ${r?'done':''}" data-plane="${p.key}">
+        ${r?.thumb ? `<img src="${r.thumb}">`:''}
+        <div class="pt-ic">${p.icon}</div>
+        <div class="pt-name">${p.name}</div>
+        <div class="pt-status">${r ? (r.type==='angle' ? r.deviation+'° dev' : r.mm+' mm') : 'Tap to capture'}</div>
+      </div>`;
+    }).join('')}
+  </div>
+  <button class="btn primary" id="btnReport" style="margin-bottom:10px;" ${doneCount<4?'disabled':''}>${doneCount<4?`Analyse (${doneCount}/4 captured)`:'Analyse Report →'}</button>
+  <button class="btn ghost" id="btnCancelCheck">Cancel</button>
+  `;
+}
+
+/* ---------------- IMAGE QUALITY CHECKS (real, deterministic, client-side) ---------------- */
+function runQualityChecks(canvas){
+  // Downsample for speed — quality signal doesn't need full resolution.
+  const w = 160, h = Math.round(160 * canvas.height/canvas.width);
+  const tmp = document.createElement('canvas'); tmp.width=w; tmp.height=h;
+  const tctx = tmp.getContext('2d');
+  tctx.drawImage(canvas, 0, 0, w, h);
+  const data = tctx.getImageData(0,0,w,h).data;
+
+  const gray = new Float32Array(w*h);
+  let sum=0, clippedDark=0, clippedBright=0;
+  for (let i=0;i<w*h;i++){
+    const r=data[i*4], g=data[i*4+1], b=data[i*4+2];
+    const v = 0.299*r+0.587*g+0.114*b;
+    gray[i]=v; sum+=v;
+    if (v<12) clippedDark++;
+    if (v>245) clippedBright++;
+  }
+  const mean = sum/(w*h);
+
+  // sharpness: simple gradient-magnitude variance (proxy for a Laplacian focus measure)
+  let gradSum=0, gradSumSq=0, n=0;
+  for (let y=1;y<h-1;y++){
+    for (let x=1;x<w-1;x++){
+      const i=y*w+x;
+      const gx = gray[i+1]-gray[i-1];
+      const gy = gray[i+w]-gray[i-w];
+      const g = Math.sqrt(gx*gx+gy*gy);
+      gradSum+=g; gradSumSq+=g*g; n++;
+    }
+  }
+  const gradMean = gradSum/n;
+  const gradVar = gradSumSq/n - gradMean*gradMean; // higher = sharper edges present = likely in focus
+
+  // rough "something structured is in frame" heuristic: edge density in the central 60% vs full frame
+  let centerEdge=0, centerN=0;
+  const cx0=Math.round(w*0.2), cx1=Math.round(w*0.8), cy0=Math.round(h*0.2), cy1=Math.round(h*0.8);
+  for (let y=cy0+1;y<cy1-1;y++){
+    for (let x=cx0+1;x<cx1-1;x++){
+      const i=y*w+x;
+      const gx=gray[i+1]-gray[i-1], gy=gray[i+w]-gray[i-w];
+      centerEdge += Math.sqrt(gx*gx+gy*gy); centerN++;
+    }
+  }
+  const centerEdgeMean = centerN ? centerEdge/centerN : 0;
+
+  const blurStatus = gradVar > 400 ? 'pass' : gradVar > 150 ? 'warn' : 'fail';
+  const clipRatio = (clippedDark+clippedBright)/(w*h);
+  const expStatus = (mean>40 && mean<215 && clipRatio<0.15) ? 'pass' : (mean>25 && mean<235 && clipRatio<0.35) ? 'warn' : 'fail';
+  const framingStatus = centerEdgeMean > 8 ? 'pass' : centerEdgeMean > 3 ? 'warn' : 'fail';
+
+  return {
+    blur: {status:blurStatus, value:round1(gradVar), label: blurStatus==='pass'?'Sharp':(blurStatus==='warn'?'Slightly soft':'Blurred — retake')},
+    exposure: {status:expStatus, value:round1(mean), label: expStatus==='pass'?'Well exposed':(expStatus==='warn'?'Borderline exposure':'Poor exposure — retake')},
+    framing: {status:framingStatus, value:round1(centerEdgeMean), label: framingStatus==='pass'?'Subject detected in frame':(framingStatus==='warn'?'Low detail centrally — check framing':'Little structure detected — retake')},
+  };
+}
+
+/* ---------------- AI LANDMARK SUGGESTION (bring-your-own-key, direct browser call) ---------------- */
+async function requestAiSuggestion(imageDataUrl, plane, device){
+  const s = state.settings;
+  if (!s.apiKey || !s.aiEnabled) return {ok:false, reason:'AI suggestions are off or no API key is set.'};
+
+  const base64 = imageDataUrl.split(',')[1];
+  const p = PLANES.find(x=>x.key===plane);
+  let pointsWanted;
+  if (p.type==='angle'){
+    pointsWanted = `Return exactly 4 points, in this order: 1) "${p.axisA}" proximal point, 2) "${p.axisA}" distal point, 3) "${p.axisB}" proximal/heel-side point, 4) "${p.axisB}" distal/forefoot-side point.`;
+  } else {
+    pointsWanted = `Return exactly 3 points, in this order: 1) a fixed anatomical reference landmark, 2) trimline edge point A, 3) trimline edge point B (A and B should span a visible segment of the trimline cut edge).`;
+  }
+  const prompt = `You are assisting with a ${device} cast/device photograph, ${p.name} view, for a fabrication verification tool. ${pointsWanted}
+Image dimensions: analyse the actual pixel dimensions of the supplied image.
+Respond with ONLY strict JSON, no other text, in this exact shape:
+{"points":[{"x":123,"y":456,"confidence":"high|medium|low","label":"short description"}],"note":"one short sentence, or empty string if nothing notable"}
+If you cannot confidently locate the requested points in this image, return an empty points array and explain briefly in "note". Coordinates must be pixel positions in the original image (x=0..width, y=0..height, top-left origin).`;
+
+  try{
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'x-api-key': s.apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-5',
+        max_tokens: 1024,
+        messages: [{
+          role:'user',
+          content:[
+            {type:'image', source:{type:'base64', media_type:'image/jpeg', data:base64}},
+            {type:'text', text:prompt}
+          ]
+        }]
+      })
+    });
+    const data = await resp.json();
+    if (!resp.ok){
+      return {ok:false, reason: (data && data.error && data.error.message) ? data.error.message : `Request failed (${resp.status}).`};
+    }
+    const text = data.content?.find(c=>c.type==='text')?.text || '';
+    const cleaned = text.replace(/```json|```/g,'').trim();
+    let parsed;
+    try{ parsed = JSON.parse(cleaned); } catch(e){ return {ok:false, reason:'AI response was not valid JSON — falling back to manual.'}; }
+    if (!parsed.points || !parsed.points.length){ return {ok:false, reason: parsed.note || 'AI could not confidently locate points in this image.'}; }
+    return {ok:true, points:parsed.points, note:parsed.note||''};
+  } catch(e){
+    return {ok:false, reason:'Network/API error: '+e.message};
+  }
+}
+
+/* ---------------- PLANE CAPTURE ---------------- */
+function openPlane(planeKey){
+  state.activePlane = { key:planeKey, imgEl:null, stage:'upload',
+    quality:null,
+    calPoints:[], pxPerMm:null, mmDistance:null,
+    aiState:'idle', // idle | loading | suggested | failed | manual
+    points:[], pointMeta:[], // shared point array for both angle(4pts: A1,A2,B1,B2) and trimline(3pts: ref,line1,line2)
+    dragIndex:null,
+  };
+  state.view='plane'; render();
+}
+function viewPlaneCapture(){
+  const p = PLANES.find(x=>x.key===state.activePlane.key);
+  const s = state.activePlane;
+  return `
+  <div class="eyebrow">${state.check.device} · ${p.name} Plane</div>
+  <h1 style="margin-bottom:14px;">${p.type==='angle'?'Angle Capture':'Trimline Capture'}</h1>
+  ${!s.imgEl ? `
+    <div class="panel" id="cameraPanel">
+      <div class="muted" style="margin-bottom:10px;">${p.type==='angle' ? 'Reference lines and calibration distance visible, camera perpendicular.' : 'Trimline edge and a fixed landmark both visible.'}</div>
+      <div class="canvas-wrap" id="liveWrap" style="display:none;">
+        <video id="liveVideo" autoplay playsinline muted style="width:100%;display:block;background:#000;"></video>
+      </div>
+      <div id="cameraError" class="muted" style="display:none;margin-bottom:10px;color:var(--amber);"></div>
+      <button class="btn primary" id="btnOpenCamera" style="margin-bottom:8px;">📷 Open Camera</button>
+      <button class="btn" id="btnShoot" style="display:none;margin-bottom:8px;">Capture</button>
+      <button class="btn ghost" id="btnUseGallery">Choose from Gallery instead</button>
+      <input type="file" id="planeFile" accept="image/*" style="display:none;">
+    </div>
+  ` : `
+    <div id="qualityPanel"></div>
+    <div class="canvas-wrap" id="canvasWrap"></div>
+    <div id="tools"></div>
+  `}
+  <button class="btn ghost" id="btnBackToGrid" style="margin-top:6px;">← Back to planes</button>
+  `;
+}
+
+let liveStream = null;
+function stopLiveStream(){ if (liveStream){ liveStream.getTracks().forEach(t=>t.stop()); liveStream=null; } }
+
+function wirePlane(){
+  const s = state.activePlane;
+  const p = PLANES.find(x=>x.key===s.key);
+  document.getElementById('btnBackToGrid')?.addEventListener('click', ()=>{ stopLiveStream(); state.view='check'; render(); });
+
+  document.getElementById('btnOpenCamera')?.addEventListener('click', async ()=>{
+    const errEl = document.getElementById('cameraError'); errEl.style.display='none';
+    try{
+      liveStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:1280} }, audio:false });
+      const video = document.getElementById('liveVideo');
+      video.srcObject = liveStream;
+      document.getElementById('liveWrap').style.display='block';
+      document.getElementById('btnOpenCamera').style.display='none';
+      document.getElementById('btnShoot').style.display='flex';
+    }catch(err){
+      errEl.textContent = 'Camera unavailable (permission denied or no camera). Use "Choose from Gallery" instead.';
+      errEl.style.display='block';
+    }
+  });
+  document.getElementById('btnShoot')?.addEventListener('click', ()=>{
+    const video = document.getElementById('liveVideo');
+    const tmp = document.createElement('canvas'); tmp.width=video.videoWidth; tmp.height=video.videoHeight;
+    tmp.getContext('2d').drawImage(video,0,0,tmp.width,tmp.height);
+    stopLiveStream();
+    const img = new Image(); img.onload=()=>{ s.imgEl=img; setupCanvas(); }; img.src = tmp.toDataURL('image/jpeg',0.9);
+  });
+  document.getElementById('btnUseGallery')?.addEventListener('click', ()=>{ stopLiveStream(); document.getElementById('planeFile').click(); });
+  document.getElementById('planeFile')?.addEventListener('change', (e)=>{
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=(ev)=>{ const img=new Image(); img.onload=()=>{ s.imgEl=img; setupCanvas(); }; img.src=ev.target.result; };
+    reader.readAsDataURL(file);
+  });
+
+  function setupCanvas(){
+    const maxW = Math.min(480, window.innerWidth-32);
+    const scale = Math.min(1, maxW/s.imgEl.width);
+    const w=Math.round(s.imgEl.width*scale), h=Math.round(s.imgEl.height*scale);
+    document.getElementById('app').innerHTML = viewPlaneCapture();
+    document.getElementById('canvasWrap').innerHTML = `<canvas id="pCanvas" width="${w}" height="${h}"></canvas>`;
+    const canvas=document.getElementById('pCanvas'), ctx=canvas.getContext('2d');
+    ctx.drawImage(s.imgEl,0,0,w,h);
+    s.canvas=canvas; s.ctx=ctx; s.baseW=w; s.baseH=h;
+
+    s.quality = runQualityChecks(canvas);
+    renderQualityPanel();
+
+    // Apply fixed-setup calibration automatically if configured — scaled to
+    // this photo's working canvas width, since px/mm is only valid at the
+    // resolution it was measured at.
+    const fc = state.settings.fixedCal;
+    if (fc.enabled && fc.pxPerMm){
+      s.pxPerMm = fc.pxPerMm * (w / fc.calibratedAtWidth);
+      s.mmDistance = fc.referenceMm;
+      s.fixedCalApplied = true;
+      s.stage = 'points';
+    } else {
+      s.stage='calibrate';
+    }
+    renderTools();
+
+    canvas.addEventListener('pointerdown',(e)=>{
+      const rect=canvas.getBoundingClientRect();
+      const x=(e.clientX-rect.left)*(canvas.width/rect.width), y=(e.clientY-rect.top)*(canvas.height/rect.height);
+      handlePointerDown({x,y});
+    });
+    canvas.addEventListener('pointermove',(e)=>{
+      if (s.dragIndex===null) return;
+      const rect=canvas.getBoundingClientRect();
+      const x=(e.clientX-rect.left)*(canvas.width/rect.width), y=(e.clientY-rect.top)*(canvas.height/rect.height);
+      s.points[s.dragIndex] = {x,y};
+      redraw();
+    });
+    canvas.addEventListener('pointerup', ()=>{ s.dragIndex=null; });
+    canvas.addEventListener('pointercancel', ()=>{ s.dragIndex=null; });
+
+    document.getElementById('btnBackToGrid')?.addEventListener('click', ()=>{ stopLiveStream(); state.view='check'; render(); });
+  }
+
+  function renderQualityPanel(){
+    const q = s.quality; const qp = document.getElementById('qualityPanel'); if (!qp) return;
+    const worst = [q.blur.status,q.exposure.status,q.framing.status].includes('fail') ? 'fail' : ([q.blur.status,q.exposure.status,q.framing.status].includes('warn') ? 'warn':'pass');
+    qp.innerHTML = `<div class="panel" style="padding:12px;">
+      <div class="step-hdr"><span>Image Quality</span><span></span></div>
+      <div class="check-row"><span class="cname">Focus / sharpness</span>${badgeHtml(q.blur.status==='pass'?'pass':q.blur.status==='warn'?'amber':'review', q.blur.label)}</div>
+      <div class="check-row"><span class="cname">Exposure</span>${badgeHtml(q.exposure.status==='pass'?'pass':q.exposure.status==='warn'?'amber':'review', q.exposure.label)}</div>
+      <div class="check-row"><span class="cname">Framing</span>${badgeHtml(q.framing.status==='pass'?'pass':q.framing.status==='warn'?'amber':'review', q.framing.label)}</div>
+      ${worst==='fail' ? `<button class="btn amber sm" id="btnRetake" style="margin-top:8px;">Retake Photo</button>` : ''}
+      <div class="muted" style="font-size:10.5px;margin-top:6px;">Deterministic client-side checks (sharpness/exposure/framing heuristics) — not AI, always computed the same way from the pixels.</div>
+    </div>`;
+    document.getElementById('btnRetake')?.addEventListener('click', ()=>{ s.imgEl=null; s.quality=null; state.view='plane'; render(); });
+  }
+
+  function redraw(){
+    const {ctx,canvas,imgEl,baseW,baseH}=s;
+    ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(imgEl,0,0,baseW,baseH);
+    drawPts(s.calPoints,'#f0a83c','C'); drawLine(s.calPoints,'#f0a83c');
+    if (p.type==='angle'){
+      if (s.points[0] && s.points[1]) drawLine([s.points[0],s.points[1]], s.pointMeta[0]?.source==='ai'?'#c9a6f0':'#2dd4bf');
+      if (s.points[2] && s.points[3]) drawLine([s.points[2],s.points[3]], s.pointMeta[2]?.source==='ai'?'#c9a6f0':'#ef5658');
+      drawLabeledPts(['A1','A2','B1','B2']);
+    } else {
+      drawLabeledPts(['REF','T1','T2']);
+      if (s.points[1] && s.points[2]) drawLine([s.points[1],s.points[2]], s.pointMeta[1]?.source==='ai'?'#c9a6f0':'#ef5658');
+    }
+  }
+  function drawLabeledPts(labels){
+    s.points.forEach((pt,i)=>{
+      const meta = s.pointMeta[i]||{};
+      const col = meta.source==='ai' ? '#c9a6f0' : '#2dd4bf';
+      s.ctx.fillStyle=col; s.ctx.beginPath(); s.ctx.arc(pt.x,pt.y,7,0,7); s.ctx.fill();
+      s.ctx.font='11px monospace'; s.ctx.fillStyle=col;
+      s.ctx.fillText(labels[i] || String(i+1), pt.x+9, pt.y-9);
+    });
+  }
+  function drawPts(pts,color,tag){ s.ctx.fillStyle=color; pts.forEach((pt,i)=>{ s.ctx.beginPath(); s.ctx.arc(pt.x,pt.y,6,0,7); s.ctx.fill(); s.ctx.font='11px monospace'; s.ctx.fillText(tag+(i+1),pt.x+9,pt.y-9); }); }
+  function drawLine(pts,color){ if(pts.length<2) return; s.ctx.strokeStyle=color; s.ctx.lineWidth=2.5; s.ctx.beginPath(); s.ctx.moveTo(pts[0].x,pts[0].y); s.ctx.lineTo(pts[1].x,pts[1].y); s.ctx.stroke(); }
+
+  function nearestPointIndex(pt){
+    let best=-1, bestD=18; // px hit radius
+    s.points.forEach((p2,i)=>{ const d=dist(pt,p2); if (d<bestD){ bestD=d; best=i; } });
+    return best;
+  }
+  function handlePointerDown(pt){
+    if (s.stage==='calibrate' && s.calPoints.length<2){ s.calPoints.push(pt); redraw(); renderTools(); return; }
+    if (s.stage==='points'){
+      const ni = nearestPointIndex(pt);
+      if (ni>=0){ s.dragIndex=ni; return; } // start dragging an existing point
+      const maxPts = p.type==='angle' ? 4 : 3;
+      if (s.points.length<maxPts){ s.points.push(pt); s.pointMeta.push({source:'manual'}); redraw(); renderTools(); }
+    }
+  }
+
+  function renderTools(){
+    const tools = document.getElementById('tools'); if (!tools) return;
+    const calDone = (s.fixedCalApplied && s.pxPerMm) || (s.calPoints.length===2 && s.pxPerMm);
+    const maxPts = p.type==='angle' ? 4 : 3;
+    const pointsDone = s.points.length===maxPts;
+
+    let html;
+    if (s.fixedCalApplied && s.pxPerMm){
+      html = `<div class="tool-step complete">
+        <div class="t-lbl"><span>1 · Calibration (fixed setup)</span>✓</div>
+        <div class="t-status">Applied automatically: ${s.pxPerMm.toFixed(2)} px/mm.</div>
+        <button class="btn ghost sm" id="btnOverrideFixedCal" style="margin-top:6px;">Setup moved? Recalibrate for this photo</button>
+      </div>`;
+    } else {
+      html = `<div class="tool-step ${s.stage==='calibrate'?'active':''} ${calDone?'complete':''}">
+      <div class="t-lbl"><span>1 · Calibration (manual)</span>${calDone?'✓':''}</div>
+      <div class="t-status">${s.calPoints.length<2?'Tap 2 points spanning a known distance.':(calDone?s.pxPerMm.toFixed(2)+' px/mm':'')}</div>
+      ${s.calPoints.length===2 && !calDone ? `<div class="row" style="margin-top:8px;"><input type="number" id="mmInput" placeholder="mm"><button class="btn primary sm" id="btnConfirmCal">Set</button></div>`:''}
+      ${s.calPoints.length ? `<button class="btn ghost sm" id="btnResetCal" style="margin-top:6px;">Reset</button>`:''}
+      <div class="muted" style="font-size:10px;margin-top:4px;">Tip: set up Fixed Setup Calibration in Settings to skip this step every time.</div>
+    </div>`;
+    }
+
+    if (calDone && !s.points.length && s.aiState==='idle'){
+      html += `<div class="tool-step active">
+        <div class="t-lbl"><span>2 · Locate points</span></div>
+        <div class="t-status">${state.settings.apiKey && state.settings.aiEnabled ? 'Let AI suggest the points, or place them yourself.' : 'Tap points directly on the photo (no AI key configured).'}</div>
+        ${state.settings.apiKey && state.settings.aiEnabled ? `<button class="btn primary sm" id="btnAiSuggest" style="margin-top:8px;">✨ Suggest with AI</button>` : ''}
+        <button class="btn ghost sm" id="btnManualPlace" style="margin-top:8px;margin-left:${state.settings.apiKey && state.settings.aiEnabled?'8px':'0'};">Place manually</button>
+      </div>`;
+    }
+    if (s.aiState==='loading'){
+      html += `<div class="tool-step active"><div class="t-lbl"><span>2 · AI analysing photo</span><span class="spinner"></span></div><div class="t-status">Requesting suggestions…</div></div>`;
+    }
+    if (s.aiState==='failed'){
+      html += `<div class="tool-step"><div class="t-lbl"><span>2 · AI suggestion unavailable</span></div><div class="t-status">${s.aiFailReason||''} Falling back to manual placement.</div><button class="btn ghost sm" id="btnManualPlace" style="margin-top:6px;">Place manually</button></div>`;
+    }
+    if (s.points.length){
+      const aiCount = s.pointMeta.filter(m=>m.source==='ai').length;
+      html += `<div class="tool-step ${s.stage==='points'?'active':''} ${pointsDone?'complete':''}">
+        <div class="t-lbl"><span>3 · Confirm points (${s.points.length}/${maxPts})</span>${pointsDone?'✓':''}</div>
+        <div class="t-status">${aiCount?`${aiCount} AI-suggested (purple) — drag any point to correct, tap empty space to add.`:'Tap to place, drag to adjust.'}</div>
+        <button class="btn ghost sm" id="btnResetPoints" style="margin-top:6px;">Reset points</button>
+      </div>`;
+    }
+    if (pointsDone){
+      html += `<button class="btn primary" id="btnConfirmPlane" style="margin-top:10px;">Confirm & Return →</button>`;
+    }
+    tools.innerHTML = html;
+
+    document.getElementById('btnOverrideFixedCal')?.addEventListener('click', ()=>{ s.fixedCalApplied=false; s.pxPerMm=null; s.calPoints=[]; s.stage='calibrate'; renderTools(); });
+    document.getElementById('btnConfirmCal')?.addEventListener('click', ()=>{
+      const mm=parseFloat(document.getElementById('mmInput').value);
+      if(!mm||mm<=0){toast('Enter a valid mm distance.');return;}
+      s.pxPerMm = dist(s.calPoints[0],s.calPoints[1])/mm; s.mmDistance=mm; s.stage='points'; renderTools();
+    });
+    document.getElementById('btnResetCal')?.addEventListener('click', ()=>{ s.calPoints=[]; s.pxPerMm=null; s.stage='calibrate'; redraw(); renderTools(); });
+    document.getElementById('btnResetPoints')?.addEventListener('click', ()=>{ s.points=[]; s.pointMeta=[]; s.aiState='idle'; s.stage='points'; redraw(); renderTools(); });
+    document.getElementById('btnManualPlace')?.addEventListener('click', ()=>{ s.aiState='manual'; s.stage='points'; renderTools(); });
+    document.getElementById('btnConfirmPlane')?.addEventListener('click', confirmPlane);
+
+    document.getElementById('btnAiSuggest')?.addEventListener('click', async ()=>{
+      s.aiState='loading'; renderTools();
+      const imgDataUrl = s.canvas.toDataURL('image/jpeg', 0.85);
+      const result = await requestAiSuggestion(imgDataUrl, p.key, state.check.device);
+      if (!result.ok){
+        s.aiState='failed'; s.aiFailReason=result.reason; renderTools(); return;
+      }
+      const maxPts2 = p.type==='angle' ? 4 : 3;
+      const pts = result.points.slice(0, maxPts2);
+      s.points = pts.map(pt=>({x:clamp(pt.x,0,s.baseW), y:clamp(pt.y,0,s.baseH)}));
+      s.pointMeta = pts.map(pt=>({source:'ai', confidence:pt.confidence||'unspecified', label:pt.label||''}));
+      s.aiState='suggested'; s.stage='points';
+      redraw(); renderTools();
+      toast(pts.length<maxPts2 ? `AI suggested ${pts.length}/${maxPts2} points — place the rest manually.` : 'AI suggested points — review and confirm.');
+    });
+  }
+
+  function confirmPlane(){
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width=110; thumbCanvas.height=Math.round(110*s.baseH/s.baseW);
+    thumbCanvas.getContext('2d').drawImage(s.canvas,0,0,thumbCanvas.width,thumbCanvas.height);
+    const thumb = thumbCanvas.toDataURL('image/jpeg',0.5);
+    const devTol = state.settings.devices[state.check.device];
+    const anyAi = s.pointMeta.some(m=>m.source==='ai');
+    const sourceNote = anyAi ? `Points ${s.pointMeta.filter(m=>m.source==='ai').length}/${s.points.length} AI-suggested, technician-confirmed/corrected.` : 'All points placed manually by the technician.';
+
+    let result;
+    if (p.type==='angle'){
+      const ang = angleBetween(s.points[0],s.points[1],s.points[2],s.points[3]);
+      const deviationFromNeutral = round1((90-ang.angle)*(ang.sign>=0?1:-1));
+      const st = angleStatus(deviationFromNeutral, devTol.tol);
+      result = { type:'angle', deviation:deviationFromNeutral, tolerance:devTol.tol, status:st.status, cls:st.cls, thumb, aiUsed:anyAi,
+        explanation:`Angle between "${p.axisA}" and "${p.axisB}" reference lines, calibrated at ${s.pxPerMm.toFixed(2)} px/mm from a ${s.mmDistance} mm reference (${s.fixedCalApplied?"fixed setup calibration, applied automatically":"manually calibrated for this photo"}). Raw included angle ${ang.angle}°, expressed as deviation from 90° neutral: ${deviationFromNeutral}°, compared to neutral target within ±${devTol.tol}°. ${sourceNote}` };
+    } else {
+      const mm = round1(pointToSegDist(s.points[0], s.points[1], s.points[2]) / s.pxPerMm);
+      const st = trimStatus(mm, devTol.tlMin, devTol.tlMax);
+      result = { type:'trimline', mm, min:devTol.tlMin, max:devTol.tlMax, status:st.status, cls:st.cls, thumb, aiUsed:anyAi,
+        explanation:`Perpendicular distance from the reference landmark to the traced trimline edge, calibrated at ${s.pxPerMm.toFixed(2)} px/mm from a ${s.mmDistance} mm reference (${s.fixedCalApplied?"fixed setup calibration, applied automatically":"manually calibrated for this photo"}). ${st.note} ${sourceNote}` };
+    }
+    state.check.results[p.key] = result;
+    state.view='check'; render();
+    toast(p.name+' captured.');
+  }
+
+  renderTools();
+}
+
+/* ---------------- REPORT ---------------- */
+function viewReport(){
+  const c = state.check;
+  const results = PLANES.map(p=>c.results[p.key]);
+  const anyReview = results.some(r=>r.status==='REVIEW REQUIRED');
+  const overallStatus = anyReview ? 'REVIEW REQUIRED' : 'PASS';
+  const overallCls = anyReview ? 'review' : (results.some(r=>r.cls==='amber') ? 'amber' : 'pass');
+  c.overallStatus = overallStatus; c.overallCls = overallCls;
+
+  return `
+  <div class="eyebrow">${c.device} · Report</div>
+  <h1 style="margin-bottom:10px;">${c.caseRef||'Cast Check'}</h1>
+  <div class="panel report-hero">
+    <div class="verdict" style="color:${overallCls==='pass'?'var(--green)':overallCls==='amber'?'var(--amber)':'var(--red)'}">${overallStatus==='PASS' ? '🟢 Within workshop parameters' : '🔴 Review required before fabrication'}</div>
+    <div class="muted">${fmtDate(c.createdAt)}</div>
+  </div>
+  <div class="panel">
+    ${PLANES.map(p=>{
+      const r = c.results[p.key];
+      return `<div class="report-row">
+        <div><div class="rname">${p.name} ${r.aiUsed?badgeHtml('ai','AI-assisted'):badgeHtml('manual','Manual')}</div><div class="rval">${r.type==='angle' ? (r.deviation>0?'+':'')+r.deviation+'°' : r.mm+' mm'}</div>
+        <details style="margin-top:4px;"><summary>Why?</summary><div class="why">${r.explanation}</div></details></div>
+        ${badgeHtml(r.cls, r.status==='PASS'?(r.cls==='amber'?'Near tolerance':'Pass'):'Review')}
+      </div>`;
+    }).join('')}
+  </div>
+  <button class="btn primary" id="btnSaveReport" style="margin-bottom:10px;">Save Report</button>
+  <button class="btn ghost" id="btnDiscardReport">Discard</button>
+  `;
+}
+
+/* ---------------- HISTORY / DETAIL ---------------- */
+function viewHistory(){
+  const rows = [...state.history].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  return `
+  <div class="eyebrow">Archive</div>
+  <h1 style="margin-bottom:14px;">Check History</h1>
+  <button class="btn primary" id="btnStart" style="margin-bottom:14px;">📷 New Cast Check</button>
+  <div class="panel">
+    ${rows.length ? rows.map(r=>`<div class="hist-item" data-open="${r.id}"><div class="hinfo"><div style="font-family:var(--mono);font-weight:600;">${r.device} · ${r.caseRef||'Cast Check'}</div><div class="hmeta">${fmtDate(r.createdAt)}</div></div>${badgeHtml(r.overallCls,r.overallStatus)}</div>`).join('')
+    : `<div class="empty"><div class="icon">◇</div>No checks yet.</div>`}
+  </div>
+  <button class="btn ghost" id="btnHome">← Back to Home</button>
+  `;
+}
+function viewDetail(){
+  const r = state.history.find(x=>x.id===state.viewId);
+  if (!r){ state.view='history'; return viewHistory(); }
+  return `
+  <div class="eyebrow">${r.device} · Check Detail</div>
+  <h1 style="margin-bottom:10px;">${r.caseRef||'Cast Check'}</h1>
+  <div class="panel report-hero">
+    <div class="verdict" style="color:${r.overallCls==='pass'?'var(--green)':r.overallCls==='amber'?'var(--amber)':'var(--red)'}">${r.overallStatus==='PASS' ? '🟢 Within parameters' : '🔴 Review required'}</div>
+    <div class="muted">${fmtDate(r.createdAt)}</div>
+  </div>
+  <div class="panel">
+    ${PLANES.map(p=>{ const res=r.results[p.key]; return `<div class="report-row">
+      <div><div class="rname">${p.name} ${res.aiUsed?badgeHtml('ai','AI-assisted'):badgeHtml('manual','Manual')}</div><div class="rval">${res.type==='angle' ? (res.deviation>0?'+':'')+res.deviation+'°' : res.mm+' mm'}</div></div>
+      ${badgeHtml(res.cls, res.status==='PASS'?(res.cls==='amber'?'Near tolerance':'Pass'):'Review')}
+    </div>`; }).join('')}
+  </div>
+  <button class="btn ghost" id="btnBackHist">← Back to History</button>
+  `;
+}
+
+/* ---------------- wiring ---------------- */
+function wire(){
+  document.getElementById('btnStart')?.addEventListener('click', startCheck);
+  document.getElementById('btnHome')?.addEventListener('click', ()=>{ state.view='home'; render(); });
+  document.getElementById('btnBackHist')?.addEventListener('click', ()=>{ state.view='history'; render(); });
+  document.getElementById('goSettingsLink')?.addEventListener('click', (e)=>{ e.preventDefault(); state.view='settings'; render(); });
+  document.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click', ()=>{ state.viewId=el.dataset.open; state.view='detail'; render(); }));
+
+  if (state.view==='settings') wireSettings();
+  if (state.view==='fixedcal') wireFixedCal();
+  if (state.view==='check') wireCheck();
+  if (state.view==='plane') wirePlane();
+  if (state.view==='report') wireReport();
+}
+
+function wireSettings(){
+  document.getElementById('btnHome')?.addEventListener('click', ()=>{ state.view='home'; render(); });
+  document.getElementById('setApiKey')?.addEventListener('change', (e)=>{ state.settings.apiKey=e.target.value.trim(); STORE.set('auto-settings', state.settings); });
+  document.getElementById('setAiEnabled')?.addEventListener('change', (e)=>{ state.settings.aiEnabled=e.target.checked; STORE.set('auto-settings', state.settings); });
+  document.getElementById('setFixedCalEnabled')?.addEventListener('change', (e)=>{
+    if (e.target.checked && !state.settings.fixedCal.pxPerMm){ toast('Calibrate first, then this switches on automatically.'); e.target.checked=false; return; }
+    state.settings.fixedCal.enabled=e.target.checked; STORE.set('auto-settings', state.settings);
+  });
+  document.getElementById('btnCalibrateFixed')?.addEventListener('click', ()=>{ state.fixedCalState=null; state.view='fixedcal'; render(); });
+  document.querySelectorAll('[data-dev]').forEach(inp=>inp.addEventListener('change',(e)=>{
+    const dev=e.target.dataset.dev, f=e.target.dataset.f;
+    state.settings.devices[dev][f] = parseFloat(e.target.value)||0;
+    STORE.set('auto-settings', state.settings);
+  }));
+}
+
+function wireCheck(){
+  const c = state.check;
+  document.querySelectorAll('[data-device]').forEach(d=>d.addEventListener('click', ()=>{ c.device=d.dataset.device; render(); }));
+  document.getElementById('caseRef')?.addEventListener('input', (e)=>{ c.caseRef=e.target.value; });
+  document.querySelectorAll('[data-plane]').forEach(t=>t.addEventListener('click', ()=>openPlane(t.dataset.plane)));
+  document.getElementById('btnReport')?.addEventListener('click', ()=>{ state.view='report'; render(); });
+  document.getElementById('btnCancelCheck')?.addEventListener('click', ()=>{ stopLiveStream(); if(confirm('Discard this check?')){ state.check=null; state.view='home'; render(); } });
+}
+
+function wireReport(){
+  document.getElementById('btnSaveReport')?.addEventListener('click', saveReport);
+  document.getElementById('btnDiscardReport')?.addEventListener('click', ()=>{ if(confirm('Discard this report?')){ state.check=null; state.view='home'; render(); } });
+}
+function saveReport(){
+  const c = state.check;
+  state.history.push(c);
+  const ok = STORE.set('auto-index', state.history);
+  if (!ok){ toast('Save failed — try again.'); return; }
+  toast('Report saved.');
+  state.check=null; state.view='home'; render();
+}
+
+boot();
+
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
